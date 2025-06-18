@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from app import routers
 from sqlmodel import SQLModel
 from app.db import engine
-import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
 
 
 # import logging
@@ -24,6 +24,16 @@ app = FastAPI(
     version="1.0.0",
     debug=True,
 )
+
+
+
+app.add_middleware(
+      CORSMiddleware,
+      allow_origins=["*"],
+      allow_credentials=True,
+      allow_methods=["*"],
+      allow_headers=["*"],
+  )
 
 
 @app.get("/healthz", include_in_schema=False)

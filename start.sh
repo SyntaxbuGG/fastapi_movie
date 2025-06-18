@@ -2,4 +2,5 @@ set -o errexit
 
 alembic upgrade head
 
-uvicorn app.main:app --bind 0.0.0.0:$PORT 
+gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+
