@@ -10,3 +10,4 @@ class AccountUser(SQLModel, table=True):
     hashed_password: str
     disabled: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
+ 

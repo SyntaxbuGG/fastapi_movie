@@ -1,3 +1,4 @@
+import os
 from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
@@ -6,10 +7,12 @@ from sqlmodel import Session, select
 from app.db import pwd_ctx, get_db
 from .models import AccountUser
 from typing import Annotated
+from dotenv import load_dotenv
 
+load_dotenv()
 
-SECRET_KEY = "your-secret-key"
-ALGORITHM = "HS256"
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -61,4 +64,3 @@ def get_current_user(session: SessionDep, token: str = Depends(oauth2_scheme)):
     if user is None or user.disabled:
         raise credentials_exception
     return user
-
