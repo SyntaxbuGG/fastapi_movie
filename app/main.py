@@ -26,7 +26,7 @@ app = FastAPI(
 )
 
 
-@app.get("/healthz")
+@app.get("/healthz", include_in_schema=False)
 def health_check():
     return {"status": "ok"}
 
