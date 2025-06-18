@@ -1,11 +1,13 @@
 [tool.alembic]
 
+
 # path to migration scripts.
 # this is typically a path given in POSIX (e.g. forward slashes)
 # format, relative to the token %(here)s which refers to the location of this
 # ini file
 script_location = "%(here)s/alembic"
-sqlalchemy_url = "postgresql+psycopg2://postgres:123@localhost:5432/localdev_db"
+
+sqlalchemy_url = "env:DATABASE_URL"
 # template used to generate migration file names; The default value is %%(rev)s_%%(slug)s
 # Uncomment the line below if you want the files to be prepended with date and time
 # see https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file

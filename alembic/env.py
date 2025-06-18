@@ -1,15 +1,13 @@
-import os
-
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
-from dotenv import load_dotenv
 
-load_dotenv()
-from app.account.models import AccountUser
-from app.movie.models import Movie, Category, Genre
+
+
+from app.account import models
+from app.movie import models
 
 from sqlmodel import SQLModel
 from app.db import engine
