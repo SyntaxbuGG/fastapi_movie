@@ -52,6 +52,21 @@ jobs:
       - name: Run Alembic migrations
         run: alembic upgrade head
 
+      - name: 🔥 Check if FastAPI app starts
+        env:
+          PORT: 8000
+        run: |
+          ./start.sh &
+          sleep 3
+          curl --fail http://localhost:8000/health || curl --fail http://localhost:8000/docs || exit 1
+
+      - name: Deploy to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          curl -X POST https://api.render.com/deploy/srv-d19d3qali9vc739u0bqg \
+            -H "Authorization: Bearer $RENDER_API_KEY"
+
       - name: Deploy to Render
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
