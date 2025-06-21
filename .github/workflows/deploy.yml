@@ -31,12 +31,23 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          for i in {1..10}; do
+            nc -z localhost 5432 && echo "Postgres is up" && break
+            echo "Waiting for Postgres..."
+            sleep 2
+          done
+      - name: Check DB connection
+        run: |
+          PGPASSWORD=123 psql -h localhost -U postgres -d localdev_db -c "SELECT 1;"
 
       - name: Run Alembic migrations
         env:
