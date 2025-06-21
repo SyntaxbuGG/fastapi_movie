@@ -18,12 +18,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U user"
+          --health-cmd "pg_isready -U postgres -d localdev_db"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
     env:
-      POSTGRES_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -50,8 +50,6 @@ jobs:
           PGPASSWORD=123 psql -h localhost -U postgres -d localdev_db -c "SELECT 1;"
 
       - name: Run Alembic migrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: alembic upgrade head
 
       - name: Deploy to Render
