@@ -5,7 +5,7 @@ from sqlmodel import SQLModel
 from app.db import engine
 from fastapi.middleware.cors import CORSMiddleware
 
-
+# rnd_Xvv6IcPEhiq3QRySYofYTDeYc6Z7
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
 
