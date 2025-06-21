@@ -12,7 +12,7 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_USER: user
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: 123
           POSTGRES_DB: localdev_db
         ports:
