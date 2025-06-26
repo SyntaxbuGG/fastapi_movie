@@ -1,0 +1,73 @@
+name: Deploy FastAPI to Render
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 123
+          POSTGRES_DB: localdev_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d localdev_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          for i in {1..10}; do
+            nc -z localhost 5432 && echo "Postgres is up" && break
+            echo "Waiting for Postgres..."
+            sleep 2
+          done
+      - name: Check DB connection
+        run: |
+          PGPASSWORD=123 psql -h localhost -U postgres -d localdev_db -c "SELECT 1;"
+
+      - name: Run Alembic migrations
+        run: alembic upgrade head
+
+      - name: 📜 Make start.sh executable
+        run: chmod +x start.sh
+
+      - name: 🔥 Check if FastAPI app starts
+
+        env:
+          PORT: 8000
+        run: |
+          ./start.sh &
+          sleep 3
+          curl --fail http://localhost:8000/healthz || curl --fail http://localhost:8000/docs || exit 1
+
+      - name: Deploy to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          curl -X POST https://api.render.com/deploy/srv-d19d3qali9vc739u0bqg \
+            -H "Authorization: Bearer $RENDER_API_KEY"
+
