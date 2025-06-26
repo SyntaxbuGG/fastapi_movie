@@ -202,7 +202,7 @@ async def list_movies_filter_cursor(
     genre_movie_list = [schemas.MovieRead.model_validate(movie) for movie in movies]
     next_last_id = movies[-1].id if has_more else None
 
-    response_data = schemas.PaginatedOffsetMovieRead(
+    response_data = schemas.PaginatedCursorMovieRead(
         next_cursor=next_last_id,
         per_page=per_page,
         has_more=has_more,
