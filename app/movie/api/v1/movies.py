@@ -63,7 +63,9 @@ async def upload_movie_poster(
     return movie
 
 
-@movies_router.get("/", response_model=BaseApiResponse[schemas.PaginatedMovies])
+@movies_router.get(
+    "/", response_model=BaseApiResponse[schemas.PaginatedOffsetMovieRead]
+)
 async def list_movies_filter_offset(
     session: SessionDep,
     page: int = Query(1, ge=1, description="Page number (starting from 1)"),
@@ -142,7 +144,7 @@ async def list_movies_filter_offset(
 
 @movies_router.get(
     "/get_movies",
-    response_model=BaseApiResponse[schemas.GenrePaginationMovieRead],
+    response_model=BaseApiResponse[schemas.PaginatedCursorMovieRead],
 )
 async def list_movies_filter_cursor(
     session: SessionDep,
