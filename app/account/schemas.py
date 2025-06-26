@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field, EmailStr
 
 
@@ -18,6 +19,23 @@ class UserRead(UserBase):
 
 class UserUpdate(UserBase):
     pass
+
+
+class UserMovieVote(BaseModel):
+    user_id: int 
+    movie_id: int 
+    vote_type: str 
+    created_at: datetime 
+
+class UserDetails(UserBase):
+    id: int
+    image_user: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    movies: list[UserMovieVote] = Field(default_factory=list)
+
+    model_config = {"from_attributes": True}
+
 
 
 class User(BaseModel):

@@ -1,7 +1,12 @@
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from typing import Annotated
+from fastapi.security import OAuth2PasswordRequestForm
+from datetime import timedelta
+from jose import jwt, JWTError
+from sqlalchemy.orm import selectinload
+
 from app.account import schemas
 from app.account.models import AccountUser
 from app.db import get_db
@@ -16,9 +21,7 @@ from .auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     REFRESH_TOKEN_EXPIRE_DAYS,
 )
-from fastapi.security import OAuth2PasswordRequestForm
-from datetime import timedelta
-from jose import jwt, JWTError
+
 
 users_router = APIRouter()
 
@@ -131,13 +134,29 @@ async def delete_user(user_id: int, session: SessionDep):
     return BaseApiResponse.ok(data={"ok": True}, message="User deleted successfully")
 
 
-# @users_router.get("/{user_id}", response_model=schemas.UserRead)
-# def get_user(user_id: int, session: SessionDep):
-#     userget = session.get(AccountUser, user_id)
+@users_router.get("/{user_id}", response_model=BaseApiResponse[schemas.UserDetails])
+async def get_user(user_id: int, session: SessionDep):
+    stmt = (
+        select(AccountUser)
+        .options(selectinload(AccountUser.movies))
+        .where(AccountUser.id == user_id)
+    )
+    userget = (await session.exec(stmt)).first()
 
-#     if not userget:
-#         raise HTTPException(status_code=404, detail="User not found")
-#     return userget
+    if not userget:
+        raise HTTPException(status_code=404, detail="User not found")
+    return BaseApiResponse.ok(data=userget, message="Succesfully")
+
+
+@users_router.post("/{user_id}/poster", response_model=dict)
+async def upload_avatar(
+    session: SessionDep, user_id: int, file: UploadFile = File(...)
+):
+    user = session.get(AccountUser, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    avatar_url = f"/static/avatars/{file.filename}"
 
 
 @users_router.get("/", response_model=BaseApiResponse[list[schemas.UserRead]])
