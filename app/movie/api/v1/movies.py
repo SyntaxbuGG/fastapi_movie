@@ -125,7 +125,6 @@ async def list_movies_filter_offset(
         offset = (page - 1) * per_page
         movies = (await session.exec(stmt.offset(offset).limit(per_page))).all()
     has_more = page < total_pages
-    movie_read_list = [schemas.MovieRead.model_validate(movie) for movie in movies]
 
     response_data = schemas.PaginatedOffsetMovieRead(
         page=page,
@@ -133,7 +132,7 @@ async def list_movies_filter_offset(
         total_items=total_items,
         total_pages=total_pages,
         has_more=has_more,
-        items=movie_read_list,
+        items=movies,
     )
     return BaseApiResponse.ok(
         data=response_data, message="Movies retrieved successfully"
@@ -195,14 +194,14 @@ async def list_movies_filter_cursor(
 
     movies = movies[:per_page]
     has_more = count_movies > per_page
-    genre_movie_list = [schemas.MovieRead.model_validate(movie) for movie in movies]
+    
     next_last_id = movies[-1].id if has_more else None
 
     response_data = schemas.PaginatedCursorMovieRead(
         next_cursor=next_last_id,
         per_page=per_page,
         has_more=has_more,
-        items=genre_movie_list,
+        items=movies,
     )
 
     return BaseApiResponse.ok(
