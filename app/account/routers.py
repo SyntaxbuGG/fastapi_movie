@@ -34,7 +34,7 @@ async def register(
     existing_user = (
         await session.exec(
             select(AccountUser).where(
-                (AccountUser.username == user_data.username)
+                (AccountUser.username == user_data.username.strip().lower())
                 | (AccountUser.email == user_data.email)
             )
         )

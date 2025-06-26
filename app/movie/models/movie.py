@@ -1,14 +1,15 @@
 from sqlmodel import Relationship, SQLModel, Field
-
-# from .category import Category
 from typing import TYPE_CHECKING
 
 
-from .links import MovieGenreLink
+
+
+from .links import MovieGenreLink, UserMovieVote
 
 if TYPE_CHECKING:
     from .genre import Genre
     from .category import Category
+    from app.account.models import AccountUser
 
 
 class Movie(SQLModel, table=True):
@@ -39,3 +40,7 @@ class Movie(SQLModel, table=True):
         link_model=MovieGenreLink,
     )
     category: "Category" = Relationship(back_populates="movies")
+
+    accounts: list["AccountUser"] = Relationship(
+        back_populates="movies", link_model=UserMovieVote
+    )

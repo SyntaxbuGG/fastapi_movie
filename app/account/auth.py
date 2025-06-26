@@ -29,12 +29,14 @@ async def verify_password(plain, hashed):
 
 
 async def get_password_hash(password):
-    return  pwd_ctx.hash(password)
+    return pwd_ctx.hash(password)
 
 
 async def authenticate_user(session: SessionDep, username: str, password: str):
     user = (
-        await session.exec(select(AccountUser).where(AccountUser.username == username))
+        await session.exec(
+            select(AccountUser).where(AccountUser.username == username.strip().lower())
+        )
     ).first()
     if not user or not verify_password(password, user.hashed_password):
         return None
