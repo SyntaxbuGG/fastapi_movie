@@ -89,9 +89,7 @@ async def list_movies_filter_offset(
     ),
 ):
     per_page = min(per_page, 100)
-    stmt = select(Movie).options(
-        selectinload(Movie.genres), selectinload(Movie.category)
-    )
+    stmt = select(Movie)
 
     if categories:
         stmt = stmt.where(Movie.category_id.in_(categories))
@@ -168,9 +166,7 @@ async def list_movies_filter_cursor(
         default=None, description="Show movies released in a specific year"
     ),
 ):
-    stmt = select(Movie).options(
-        selectinload(Movie.genres), selectinload(Movie.category)
-    )
+    stmt = select(Movie)
 
     if last_id is not None:
         stmt = stmt.where(Movie.id < last_id)
@@ -216,7 +212,13 @@ async def list_movies_filter_cursor(
 
 @movies_router.get("/{movie_id}", response_model=BaseApiResponse[schemas.MovieRead])
 async def read_movie(movie_id: int, session: SessionDep):
-    movie = await session.get(Movie, movie_id)
+    stmt = (
+        select(Movie)
+        .options(selectinload(Movie.category), selectinload(Movie.genres))
+        .where(Movie.id == movie_id)
+    )
+
+    movie = (await session.exec(stmt)).first()
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
 

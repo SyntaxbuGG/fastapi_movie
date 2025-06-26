@@ -40,17 +40,8 @@ class MovieReadMainPage(MovieBase):
     duration: int | None = None
     poster: str | None = None
     backdrop: str | None = None
-    description: str | None = None
     trailer_url: str | None = None
     download_url: str | None = None
-
-    genres: list["GenreReadMainPage"] = Field(
-        default_factory=list, title="List of genres", description="List of genre slugs"
-    )
-    category: "CategoryReadMainPage" = Field(
-        title="Category",
-        description="Category to which the movie belongs",
-    )
 
 
 class PaginatedOffsetMovieRead(BaseModel):
