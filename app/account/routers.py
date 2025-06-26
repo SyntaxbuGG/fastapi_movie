@@ -1,6 +1,9 @@
+import os
+import shutil
+import uuid
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from typing import Annotated
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
@@ -110,7 +113,7 @@ async def refresh_access_token(session: SessionDep, data: schemas.TokenRefreshRe
     )
 
 
-@users_router.put("/{user_id}", response_model=schemas.UserUpdate)
+@users_router.put("/{user_id}", response_model=BaseApiResponse[schemas.UserUpdate])
 async def update_user(
     user_id: int, userupdate: schemas.UserUpdate, session: SessionDep
 ):
@@ -119,7 +122,9 @@ async def update_user(
         for key, value in userupdate.model_dump(exclude_unset=True).items():
             setattr(user, key, value)
         await session.commit()
-    return user
+        await session.refresh(user)
+
+    return BaseApiResponse.ok(data=user, message="Succes")
 
 
 @users_router.delete("/{user_id}")
@@ -150,13 +155,23 @@ async def get_user(user_id: int, session: SessionDep):
 
 @users_router.post("/{user_id}/poster", response_model=dict)
 async def upload_avatar(
-    session: SessionDep, user_id: int, file: UploadFile = File(...)
+    session: SessionDep, request: Request, user_id: int, file: UploadFile = File(...)
 ):
-    user = session.get(AccountUser, user_id)
+    user = await session.get(AccountUser, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    avatar_url = f"/static/avatars/{file.filename}"
+    filename = f"{uuid.uuid4().hex}_{file.filename}"
+    directory = "app/static/avatars"
+    os.makedirs(directory, exist_ok=True)
+    file_path = os.path.join(directory, filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    avatar_url = request.url_for("static", path=f"avatars/{filename}")
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    return {"Avatar url": str(avatar_url)}
 
 
 @users_router.get("/", response_model=BaseApiResponse[list[schemas.UserRead]])

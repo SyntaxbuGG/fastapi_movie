@@ -47,6 +47,7 @@ async def upload_movie_poster(
 ):
     filename = f"{uuid.uuid4().hex[:8]}_{poster.filename}"
     file_location = f"app/static/posters/{filename}"
+    
     with open(file_location, "wb") as buffer:
         shutil.copyfileobj(poster.file, buffer)
 

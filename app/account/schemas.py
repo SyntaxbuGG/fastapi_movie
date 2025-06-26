@@ -3,8 +3,8 @@ from pydantic import BaseModel, Field, EmailStr
 
 
 class UserBase(BaseModel):
-    username: str = Field(max_length=100)
-    email: EmailStr
+    username: str | None = Field(default=None,max_length=100)
+    email: EmailStr | None = None
 
 
 class UserCreate(UserBase):
@@ -18,7 +18,8 @@ class UserRead(UserBase):
 
 
 class UserUpdate(UserBase):
-    pass
+    image_user: str | None = None
+
 
 
 class UserMovieVote(BaseModel):
