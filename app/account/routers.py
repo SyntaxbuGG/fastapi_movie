@@ -1,6 +1,7 @@
 import os
 import shutil
 import uuid
+from pathlib import Path
 
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -160,7 +161,7 @@ async def get_user(user_id: int, session: SessionDep):
 
 @users_router.post("/{user_id}/poster", response_model=dict)
 async def upload_avatar(
-    session: SessionDep, request: Request, user_id: int, file: UploadFile = File(...)
+    session: SessionDep, user_id: int, file: UploadFile = File(...)
 ):
     user = await session.get(AccountUser, user_id)
     if not user:
@@ -184,11 +185,20 @@ async def upload_avatar(
     MAX_FILE_SIZE_MB = 2
     MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024
     contents_image = await file.read()
-    if len(contents_image) > MAX_FILE_SIZE_MB:
+    if len(contents_image) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File must be smaller than {MAX_FILE_SIZE} MB",
+            detail=f"File must be smaller than {MAX_FILE_SIZE_MB} MB",
         )
+    #  внутреннего указателя в начало файла.
+    file.file.seek(0)
+
+    previous_image_url = user.user_image
+    if previous_image_url:
+        # Удаление изображение из диска памяти
+        delete_file = Path(f"app/{previous_image_url}")
+        if delete_file.exists():
+            delete_file.unlink()
 
     filename = f"{uuid.uuid4().hex}_{file.filename}"
     directory = "app/static/avatars"
@@ -197,7 +207,9 @@ async def upload_avatar(
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    avatar_url = request.url_for("static", path=f"avatars/{filename}")
+    avatar_url = f"static/avatars/{filename}"
+
+    user.user_image = avatar_url
     session.add(user)
     await session.commit()
     await session.refresh(user)

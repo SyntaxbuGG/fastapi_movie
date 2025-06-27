@@ -11,7 +11,7 @@ class AccountUser(SQLModel, table=True):
     hashed_password: str
     disabled: bool = False
     user_image: str | None = Field(default=None)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now())
 
     movies: list["Movie"] = Relationship(
         back_populates="accounts", link_model=UserMovieVote
