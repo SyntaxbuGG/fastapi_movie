@@ -1,9 +1,10 @@
 import os
 import shutil
 import uuid
+
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request, status
 from typing import Annotated
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
@@ -30,6 +31,10 @@ users_router = APIRouter()
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
+
+
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+ALLOWED_MIME_TYPES = {"image/png", "image/jpeg"}
 
 
 @users_router.post("/register", response_model=BaseApiResponse[schemas.UserRead])
@@ -160,6 +165,31 @@ async def upload_avatar(
     user = await session.get(AccountUser, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    # 🔒 Проверка расширения
+    ext = file.filename.split(".")[-1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only .png, .jpg, .jpeg files are allowed",
+        )
+
+    # 🔒 Проверка MIME-типа
+    if file.content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Image MIME type"
+        )
+
+    # 🔒 Проверка размера
+    MAX_FILE_SIZE_MB = 2
+    MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024
+    contents_image = await file.read()
+    if len(contents_image) > MAX_FILE_SIZE_MB:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File must be smaller than {MAX_FILE_SIZE} MB",
+        )
+
     filename = f"{uuid.uuid4().hex}_{file.filename}"
     directory = "app/static/avatars"
     os.makedirs(directory, exist_ok=True)

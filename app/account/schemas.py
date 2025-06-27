@@ -18,7 +18,7 @@ class UserRead(UserBase):
 
 
 class UserUpdate(UserBase):
-    image_user: str | None = None
+    user_image: str | None = None
 
 
 
@@ -30,7 +30,7 @@ class UserMovieVote(BaseModel):
 
 class UserDetails(UserBase):
     id: int
-    image_user: str | None = None
+    user_image: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     movies: list[UserMovieVote] = Field(default_factory=list)
