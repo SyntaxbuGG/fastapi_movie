@@ -5,10 +5,14 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-from app.db import pwd_ctx, get_db
+from app.db import get_db
 from .models import AccountUser
 from typing import Annotated
 from dotenv import load_dotenv
+from fastapi.concurrency import run_in_threadpool
+
+import bcrypt
+
 
 load_dotenv()
 
@@ -18,18 +22,22 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/token")
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
 
 
-async def verify_password(plain, hashed):
-    return await pwd_ctx.verify(plain, hashed)
+async def hash_password(password: str) -> str:
+    return await run_in_threadpool(
+        lambda: bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    )
 
 
-async def get_password_hash(password):
-    return pwd_ctx.hash(password)
+async def verify_password(plain: str, hashed: str) -> bool:
+    return await run_in_threadpool(
+        lambda: bcrypt.checkpw(plain.encode(), hashed.encode())
+    )
 
 
 async def authenticate_user(session: SessionDep, username: str, password: str):
@@ -38,7 +46,7 @@ async def authenticate_user(session: SessionDep, username: str, password: str):
             select(AccountUser).where(AccountUser.username == username.strip().lower())
         )
     ).first()
-    if not user or not verify_password(password, user.hashed_password):
+    if not user or not await verify_password(password, user.hashed_password):
         return None
     return user
 
@@ -64,14 +72,19 @@ async def get_current_user(session: SessionDep, token: str = Depends(oauth2_sche
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        
+        user_id = payload.get("sub")
+        print(user_id)
+        
+        if user_id is None:
             raise credentials_exception
-    except JWTError:
+        user_id = int(user_id)
+    except (JWTError, ValueError) as e:
+        
+        print(f"JWT Decode Error: {e}")
+
         raise credentials_exception
-    user = (
-        await session.exec(select(AccountUser).where(AccountUser.username == username))
-    ).first()
+    user = await session.get(AccountUser, user_id)
     if user is None or user.disabled:
         raise credentials_exception
     return user

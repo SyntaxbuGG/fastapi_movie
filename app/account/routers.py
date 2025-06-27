@@ -3,6 +3,7 @@ import shutil
 import uuid
 from pathlib import Path
 
+
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request, status
@@ -20,7 +21,8 @@ from .auth import (
     ALGORITHM,
     SECRET_KEY,
     create_refresh_token,
-    get_password_hash,
+    get_current_user,
+    hash_password,
     authenticate_user,
     create_access_token,
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -59,7 +61,7 @@ async def register(
     user = AccountUser(
         username=user_data.username,
         email=user_data.email,
-        hashed_password=await get_password_hash(user_data.password),
+        hashed_password=await hash_password(user_data.password),
     )
     session.add(user)
     await session.commit()
@@ -79,15 +81,34 @@ async def login(
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect credentials")
     access_token = await create_access_token(
-        sub=user.username, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        sub=str(user.id), expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     refresh_token = await create_refresh_token(
-        sub=user.username, expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        sub=str(user.id), expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     )
     access_token_data = schemas.CreateToken(
         access_token=access_token, refresh_token=refresh_token, token_type="bearer"
     )
     return BaseApiResponse.ok(data=access_token_data, message="Login successful")
+
+
+@users_router.post("/token", summary="Auth2-compatible login")
+async def login_for_access_token(
+    session: SessionDep, form_data: OAuth2PasswordRequestForm = Depends()
+):
+    user = await authenticate_user(session, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect username or password",
+        )
+
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = await create_access_token(
+        sub=str(user.id), expires_delta=access_token_expires
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @users_router.post("/refresh", response_model=BaseApiResponse[schemas.GetRefreshToken])
@@ -119,11 +140,13 @@ async def refresh_access_token(session: SessionDep, data: schemas.TokenRefreshRe
     )
 
 
-@users_router.put("/{user_id}", response_model=BaseApiResponse[schemas.UserUpdate])
+@users_router.put("/me", response_model=BaseApiResponse[schemas.UserUpdate])
 async def update_user(
-    user_id: int, userupdate: schemas.UserUpdate, session: SessionDep
+    current_user: Annotated[AccountUser, Depends(get_current_user)],
+    userupdate: schemas.UserUpdate,
+    session: SessionDep,
 ):
-    user = await session.get(AccountUser, user_id)
+    user = await session.get(AccountUser, current_user.id)
     if user:
         for key, value in userupdate.model_dump(exclude_unset=True).items():
             setattr(user, key, value)
@@ -133,9 +156,11 @@ async def update_user(
     return BaseApiResponse.ok(data=user, message="Succes")
 
 
-@users_router.delete("/{user_id}")
-async def delete_user(user_id: int, session: SessionDep):
-    user_delete = await session.get(AccountUser, user_id)
+@users_router.delete("/me")
+async def delete_user(
+    current_user: Annotated[AccountUser, Depends(get_current_user)], session: SessionDep
+):
+    user_delete = await session.get(AccountUser, current_user.id)
     if not user_delete:
         raise HTTPException(status_code=404, detail="User not found")
     session.delete(user_delete)
@@ -145,12 +170,14 @@ async def delete_user(user_id: int, session: SessionDep):
     return BaseApiResponse.ok(data={"ok": True}, message="User deleted successfully")
 
 
-@users_router.get("/{user_id}", response_model=BaseApiResponse[schemas.UserDetails])
-async def get_user(user_id: int, session: SessionDep):
+@users_router.get("/me", response_model=BaseApiResponse[schemas.UserDetails])
+async def get_user(
+    current_user: Annotated[AccountUser, Depends(get_current_user)], session: SessionDep
+):
     stmt = (
         select(AccountUser)
         .options(selectinload(AccountUser.movies))
-        .where(AccountUser.id == user_id)
+        .where(AccountUser.id == current_user.id)
     )
     userget = (await session.exec(stmt)).first()
 
@@ -159,11 +186,13 @@ async def get_user(user_id: int, session: SessionDep):
     return BaseApiResponse.ok(data=userget, message="Succesfully")
 
 
-@users_router.post("/{user_id}/poster", response_model=dict)
+@users_router.post("/poster", response_model=dict)
 async def upload_avatar(
-    session: SessionDep, user_id: int, file: UploadFile = File(...)
+    session: SessionDep,
+    current_user: Annotated[AccountUser, Depends(get_current_user)],
+    file: UploadFile = File(...),
 ):
-    user = await session.get(AccountUser, user_id)
+    user = await session.get(AccountUser, current_user.id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 

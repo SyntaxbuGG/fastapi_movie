@@ -1,13 +1,13 @@
 import os
 
 from dotenv import load_dotenv
-from passlib.context import CryptContext
+
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from typing import AsyncGenerator
 
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 load_dotenv()  # Загружаем переменные из .env
 
