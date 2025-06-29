@@ -44,24 +44,31 @@ class MovieReadMainPage(MovieBase):
     download_url: str | None = None
 
 
-class PaginatedOffsetMovieRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class MetaDataOffset(BaseModel):
     page: int
     per_page: int
     total_items: int
     total_pages: int
     has_more: bool
+
+
+class MetaDataCursor(BaseModel):
+    next_cursor: int | None = None
+    per_page: int
+    has_more: bool
+
+
+class PaginatedOffsetMovieRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    meta: MetaDataOffset
     items: list[MovieReadMainPage]
 
 
 class PaginatedCursorMovieRead(BaseModel):
     model_config = {"from_attributes": True}
 
-    next_cursor: int | None = None
-    per_page: int
-    has_more: bool
-
+    meta: MetaDataCursor
     items: list["MovieReadMainPage"]
 
 

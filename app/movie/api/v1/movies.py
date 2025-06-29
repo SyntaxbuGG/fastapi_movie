@@ -47,7 +47,7 @@ async def upload_movie_poster(
 ):
     filename = f"{uuid.uuid4().hex[:8]}_{poster.filename}"
     file_location = f"app/static/posters/{filename}"
-    
+
     with open(file_location, "wb") as buffer:
         shutil.copyfileobj(poster.file, buffer)
 
@@ -127,11 +127,13 @@ async def list_movies_filter_offset(
     has_more = page < total_pages
 
     response_data = schemas.PaginatedOffsetMovieRead(
-        page=page,
-        per_page=per_page,
-        total_items=total_items,
-        total_pages=total_pages,
-        has_more=has_more,
+        meta=schemas.MetaDataOffset(
+            page=page,
+            per_page=per_page,
+            total_items=total_items,
+            total_pages=total_pages,
+            has_more=has_more,
+        ),
         items=movies,
     )
     return BaseApiResponse.ok(
@@ -194,13 +196,13 @@ async def list_movies_filter_cursor(
 
     movies = movies[:per_page]
     has_more = count_movies > per_page
-    
+
     next_last_id = movies[-1].id if has_more else None
 
     response_data = schemas.PaginatedCursorMovieRead(
-        next_cursor=next_last_id,
-        per_page=per_page,
-        has_more=has_more,
+        meta=schemas.MetaDataCursor(
+            next_cursor=next_last_id, per_page=per_page, has_more=has_more
+        ),
         items=movies,
     )
 
