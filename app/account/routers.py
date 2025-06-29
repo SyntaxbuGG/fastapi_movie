@@ -49,7 +49,7 @@ async def register(
         await session.exec(
             select(AccountUser).where(
                 (AccountUser.username == user_data.username.strip().lower())
-                | (AccountUser.email == user_data.email)
+                | (AccountUser.email == user_data.email.strip().lower())
             )
         )
     ).first()
@@ -59,8 +59,8 @@ async def register(
         )
 
     user = AccountUser(
-        username=user_data.username,
-        email=user_data.email,
+        username=user_data.username.strip().lower(),
+        email=user_data.email.strip().lower(),
         hashed_password=await hash_password(user_data.password),
     )
     session.add(user)

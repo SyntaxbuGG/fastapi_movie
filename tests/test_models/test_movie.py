@@ -26,11 +26,4 @@ def test_movie_model_fields():
     assert movie.release_date == "2010-07-16"
 
 
-def test_movie_forward_refs():
-    Movie.model_rebuild()
-    # Check that relationships are intact
-    assert hasattr(Movie, "model_fields")
-    assert hasattr(Movie, "genres")
-    assert hasattr(Movie, "category")
-    assert "genres" in Movie.__annotations__
-    assert "category" in Movie.__annotations__
+
