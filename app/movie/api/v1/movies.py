@@ -89,7 +89,9 @@ async def list_movies_filter_offset(
     ),
 ):
     per_page = min(per_page, 100)
-    stmt = select(Movie)
+    stmt = select(Movie).options(
+        selectinload(Movie.genres), selectinload(Movie.category)
+    )
 
     if categories:
         stmt = stmt.where(Movie.category_id.in_(categories))
@@ -185,6 +187,8 @@ async def list_movies_filter_cursor(
         stmt = stmt.where(Movie.release_date <= release_date_to)
     if release_year:
         stmt = stmt.where(Movie.release_date.ilike(f"{release_year}-%"))
+    if popularity:
+        stmt = stmt.order_by(Movie.popularity.desc())
 
     stmt = stmt.order_by(Movie.id.desc()).limit(per_page + 1)
     result = await session.exec(stmt)

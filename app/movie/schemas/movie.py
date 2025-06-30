@@ -41,7 +41,12 @@ class MovieReadMainPage(MovieBase):
     age_rating: str | None = None
     genres: list["GenreRead"] = Field(
         default_factory=list, title="List of genres", description="List of genre slugs"
+    ),
+    category: "CategoryRead" = Field(
+        title="Category",
+        description="Category to which the movie belongs",
     )
+
     duration: int | None = None
     poster: str | None = None
     backdrop: str | None = None
