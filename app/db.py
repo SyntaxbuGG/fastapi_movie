@@ -12,6 +12,7 @@ from typing import AsyncGenerator
 load_dotenv()  # Загружаем переменные из .env
 
 
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_async_engine(DATABASE_URL, echo=True)
 

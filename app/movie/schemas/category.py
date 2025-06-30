@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from .movie import MovieRead
 
 
+
 example_data = {
     "name": "Live",
     "description": "концерты, спортивные трансляции, шоу",
@@ -10,6 +11,8 @@ example_data = {
 
 
 class CategoryRead(BaseModel):
+    
+    
     model_config = {"from_attributes": True}
 
     id: int
@@ -32,7 +35,9 @@ class CategoryCreate(BaseModel):
     model_config = {"json_schema_extra": {"example": example_data}}
 
 
+
 class CatPaginationMovieRead(BaseModel):
+    
     model_config = {"from_attributes": True}
 
     last_id: int | None = None
@@ -40,3 +45,4 @@ class CatPaginationMovieRead(BaseModel):
     per_page: int
 
     items: list[MovieRead]
+

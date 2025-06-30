@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field, ConfigDict
 
 
+
+
 class MovieBase(BaseModel):
     title: str = Field(max_length=512)
     original_title: str | None = Field(default=None, max_length=512)
@@ -37,6 +39,9 @@ class MovieReadMainPage(MovieBase):
     title: str
     release_date: str | None = None
     age_rating: str | None = None
+    genres: list["GenreRead"] = Field(
+        default_factory=list, title="List of genres", description="List of genre slugs"
+    )
     duration: int | None = None
     poster: str | None = None
     backdrop: str | None = None
