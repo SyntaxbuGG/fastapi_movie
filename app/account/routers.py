@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from typing import Annotated
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
-from jose import jwt, JWTError
+from jose import jwt, JWTError , ExpiredSignatureError
 from sqlalchemy.orm import selectinload
 
 from app.account import schemas
@@ -127,8 +127,8 @@ async def refresh_access_token(session: SessionDep, data: schemas.TokenRefreshRe
                 select(AccountUser).where(AccountUser.username == username)
             )
         ).first()
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    except ExpiredSignatureError :
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Refresh token has expired")
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

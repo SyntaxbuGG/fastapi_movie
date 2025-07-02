@@ -1,7 +1,7 @@
 import os
 from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 from datetime import datetime, timedelta, timezone
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -65,26 +65,31 @@ async def create_refresh_token(sub: str, expires_delta: timedelta | None = None)
 
 
 async def get_current_user(session: SessionDep, token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        
         user_id = payload.get("sub")
-        print(user_id)
-        
         if user_id is None:
-            raise credentials_exception
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token is missing user ID",
+            )
         user_id = int(user_id)
-    except (JWTError, ValueError) as e:
-        
-        print(f"JWT Decode Error: {e}")
+        user = await session.get(AccountUser, user_id)
+        if user is None or user.disabled:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
+        return user
 
-        raise credentials_exception
-    user = await session.get(AccountUser, user_id)
-    if user is None or user.disabled:
-        raise credentials_exception
-    return user
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token has expired",
+        )
+    except JWTError as jwt:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Could not validate {jwt}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
