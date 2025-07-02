@@ -221,7 +221,7 @@ async def list_movies_filter_cursor(
     has_more = count_movies > per_page
 
     next_last_id = movies[-1].id if has_more else None
-    items = [
+    items_movie = [
         schemas.MovieReadMainPage(
             id=mov.id,
             title=mov.title,
@@ -241,11 +241,11 @@ async def list_movies_filter_cursor(
         meta=schemas.MetaDataCursor(
             next_cursor=next_last_id, per_page=per_page, has_more=has_more
         ),
-        items=items,
+        items=items_movie,
     )
 
     return BaseApiResponse.ok(
-        data=response_data, message="Category movies retrieved successfully"
+        data=response_data, message="Succes"
     )
 
 

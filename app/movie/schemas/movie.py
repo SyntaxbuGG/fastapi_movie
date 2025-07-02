@@ -31,7 +31,7 @@ class MovieRead(MovieBase):
     )
 
 
-class MovieReadMainPage(MovieBase):
+class MovieReadMainPage(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     title: str
@@ -52,7 +52,6 @@ class MovieReadMainPage(MovieBase):
     trailer_url: str | None = None
     download_url: str | None = None
 
-    
 
 class MetaDataOffset(BaseModel):
     page: int
@@ -79,7 +78,7 @@ class PaginatedCursorMovieRead(BaseModel):
     model_config = {"from_attributes": True}
 
     meta: MetaDataCursor
-    items: list["MovieReadMainPage"]
+    items: list[MovieReadMainPage]
 
 
 class MovieCreate(MovieBase):
