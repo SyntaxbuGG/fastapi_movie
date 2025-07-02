@@ -6,7 +6,7 @@ T = TypeVar("T")
 
 
 class ErrorResponse(BaseModel):
-    code: int
+    code: str
     message: str
 
 
@@ -21,7 +21,7 @@ class BaseApiResponse(BaseModel, Generic[T]):
         return cls(success=True, message=message, data=data)
 
     @classmethod
-    def fail(cls, code: int, message: str) -> "BaseApiResponse[None]":
+    def fail(cls, code: str, message: str) -> "BaseApiResponse[None]":
         return cls(
             success=False,
             message=message,
