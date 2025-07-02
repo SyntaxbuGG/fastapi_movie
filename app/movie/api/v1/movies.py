@@ -124,7 +124,7 @@ async def list_movies_filter_offset(
     else:
         total_pages = (total_items + per_page - 1) // per_page
         if page > total_pages:
-            raise HTTPException(status_code=404, detail="Page not found")
+            raise BaseApiResponse.fail(status_code=204, detail="Movie not found")
         offset = (page - 1) * per_page
         movies = (await session.exec(stmt.offset(offset).limit(per_page))).all()
     has_more = page < total_pages
