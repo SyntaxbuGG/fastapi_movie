@@ -4,7 +4,7 @@ import uuid
 
 
 from typing import Annotated, Literal
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query , status
 from sqlmodel import select, func, or_, not_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -212,7 +212,7 @@ async def list_movies_filter_cursor(
     movies = result.all()
 
     if not movies:
-        raise HTTPException(status_code=404, detail="Page not found")
+        raise BaseApiResponse.fail(code=status.HTTP_204_NO_CONTENT, message="Movie not found")
     count_movies = len(movies)
 
     movies = movies[:per_page]
