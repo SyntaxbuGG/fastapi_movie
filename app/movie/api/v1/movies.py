@@ -168,7 +168,7 @@ async def list_movies_filter_cursor(
     session: SessionDep,
     last_id: int = Query(
         default=None,
-        ge=0,
+        gt=0,
         description="Cursor ID to get movies before this ID (used for pagination)",
     ),
     per_page: int = Query(10, le=100, ge=10, description="Number of movies per page"),
@@ -219,12 +219,27 @@ async def list_movies_filter_cursor(
     has_more = count_movies > per_page
 
     next_last_id = movies[-1].id if has_more else None
-
+    items = [
+        schemas.MovieReadMainPage(
+            id=mov.id,
+            title=mov.title,
+            release_date=mov.release_date,
+            age_rating=mov.age_rating,
+            genre=mov.genres[0].name if mov.genres else None,
+            category=mov.category.name,
+            duration=mov.duration,
+            poster=mov.poster,
+            backdrop=mov.backdrop,
+            trailer_url=mov.trailer_url,
+            download_url=mov.download_url,
+        )
+        for mov in movies
+    ]
     response_data = schemas.PaginatedCursorMovieRead(
         meta=schemas.MetaDataCursor(
             next_cursor=next_last_id, per_page=per_page, has_more=has_more
         ),
-        items=movies,
+        items=items,
     )
 
     return BaseApiResponse.ok(
