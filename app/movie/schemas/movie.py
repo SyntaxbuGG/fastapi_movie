@@ -1,6 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
-
-
+from pydantic import BaseModel, Field, ConfigDict, field_serializer
 
 
 class MovieBase(BaseModel):
@@ -39,10 +37,11 @@ class MovieReadMainPage(MovieBase):
     title: str
     release_date: str | None = None
     age_rating: str | None = None
-    genres: list["GenreRead"] = Field(
-        default_factory=list, title="List of genres", description="List of genre slugs"
-    ),
-    category: "CategoryRead" = Field(
+    genre: str | None = Field(
+        default=None, title="List of genres", description="List of genre slugs"
+    )
+    category: str | None = Field(
+        default=None,
         title="Category",
         description="Category to which the movie belongs",
     )
@@ -53,6 +52,7 @@ class MovieReadMainPage(MovieBase):
     trailer_url: str | None = None
     download_url: str | None = None
 
+    
 
 class MetaDataOffset(BaseModel):
     page: int
@@ -151,6 +151,20 @@ class MovieUpdate(MovieBase):
     )
     category_id: int | None = Field(default=None)
     genre_id: int | None = Field(default=None)
+
+
+class MovieReadAccount(BaseModel):
+    title: str
+    genres: list[str] = Field(
+        default_factory=list, title="List of genres", description="List of genre slugs"
+    )
+    category: str | None = Field(
+        default=None,
+        title="Category",
+        description="category to which the movie belongs",
+    )
+    general_rating: int | None = None
+    poster: str | None = None
 
 
 from app.movie.schemas.category import CategoryRead, CategoryReadMainPage  # noqa: E402

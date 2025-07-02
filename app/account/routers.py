@@ -1,3 +1,4 @@
+from getpass import getuser
 import os
 import shutil
 import uuid
@@ -28,12 +29,14 @@ from .auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     REFRESH_TOKEN_EXPIRE_DAYS,
 )
+from app.movie.models.links import UserMovieVote
 
 
 users_router = APIRouter()
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
+CurrentUserDep = Annotated[AccountUser, Depends(get_current_user)]
 
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
@@ -142,7 +145,7 @@ async def refresh_access_token(session: SessionDep, data: schemas.TokenRefreshRe
 
 @users_router.put("/me", response_model=BaseApiResponse[schemas.UserUpdate])
 async def update_user(
-    current_user: Annotated[AccountUser, Depends(get_current_user)],
+    current_user: CurrentUserDep,
     userupdate: schemas.UserUpdate,
     session: SessionDep,
 ):
@@ -157,9 +160,7 @@ async def update_user(
 
 
 @users_router.delete("/me")
-async def delete_user(
-    current_user: Annotated[AccountUser, Depends(get_current_user)], session: SessionDep
-):
+async def delete_user(current_user: CurrentUserDep, session: SessionDep):
     user_delete = await session.get(AccountUser, current_user.id)
     if not user_delete:
         raise HTTPException(status_code=404, detail="User not found")
@@ -171,25 +172,32 @@ async def delete_user(
 
 
 @users_router.get("/me", response_model=BaseApiResponse[schemas.UserDetails])
-async def get_user(
-    current_user: Annotated[AccountUser, Depends(get_current_user)], session: SessionDep
-):
+async def get_user(current_user: CurrentUserDep, session: SessionDep):
     stmt = (
         select(AccountUser)
-        .options(selectinload(AccountUser.movies))
+        .options(selectinload(AccountUser.movies),selectinload)
         .where(AccountUser.id == current_user.id)
     )
     userget = (await session.exec(stmt)).first()
 
     if not userget:
         raise HTTPException(status_code=404, detail="User not found")
-    return BaseApiResponse.ok(data=userget, message="Succesfully")
+
+    schemadetails = schemas.UserDetails(
+        id=userget.id,
+        username=userget.username,
+        email=userget.email,
+        user_image=userget.user_image,
+        created_at=userget.created_at,
+        movies = [schemas.MovieReadAccount.model_validate(vote) for vote in userget.movies],
+    )
+    return BaseApiResponse.ok(data=schemadetails, message="Succesfully")
 
 
 @users_router.post("/poster", response_model=dict)
 async def upload_avatar(
     session: SessionDep,
-    current_user: Annotated[AccountUser, Depends(get_current_user)],
+    current_user: CurrentUserDep,
     file: UploadFile = File(...),
 ):
     user = await session.get(AccountUser, current_user.id)
@@ -253,3 +261,30 @@ async def list_user(session: SessionDep):
         data=[schemas.UserRead.model_validate(user) for user in get_list],
         message="Users retrieved successfully",
     )
+
+
+@users_router.post("/favorites", response_model=BaseApiResponse[str])
+async def add_favorite(
+    session: SessionDep, current_user: CurrentUserDep, movie_id: int
+):
+    getuser = await session.get(AccountUser, current_user.id)
+    if not getuser:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    existingvote = (
+        await session.exec(
+            select(UserMovieVote).where(
+                UserMovieVote.user_id == getuser.id, UserMovieVote.movie_id == movie_id
+            )
+        )
+    ).first()
+    if existingvote:
+        await session.delete(existingvote)
+        await session.commit()
+        return BaseApiResponse.ok(data="Removed", message="Removed from favorites")
+    else:
+        new_vote = UserMovieVote(
+            user_id=getuser.id, movie_id=movie_id, vote_type="favorite"
+        )
+        session.add(new_vote)
+        await session.commit()
+        return BaseApiResponse.ok(data="added", message="Added to favorites")

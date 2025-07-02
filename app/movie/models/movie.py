@@ -1,15 +1,16 @@
 from sqlmodel import Relationship, SQLModel, Field
 from typing import TYPE_CHECKING
 
-
-
-
 from .links import MovieGenreLink, UserMovieVote
+
+
+
 
 if TYPE_CHECKING:
     from .genre import Genre
     from .category import Category
     from app.account.models import AccountUser
+    
 
 
 class Movie(SQLModel, table=True):
@@ -31,6 +32,8 @@ class Movie(SQLModel, table=True):
     release_date: str | None = Field(default=None, max_length=10, index=True)
     vote_average: float | None = Field(default=None, ge=0.0, le=10.0, index=True)
     vote_count: int | None = Field(default=None, ge=0, index=True)
+    general_rating: int | None = Field(default=None)
+    
     category_id: int | None = Field(
         default=None, foreign_key="category.id", sa_column_kwargs={"index": True}
     )
@@ -44,3 +47,4 @@ class Movie(SQLModel, table=True):
     accounts: list["AccountUser"] = Relationship(
         back_populates="movies", link_model=UserMovieVote
     )
+

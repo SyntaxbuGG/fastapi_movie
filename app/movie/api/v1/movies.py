@@ -1,4 +1,5 @@
 import shutil
+from turtle import back
 import uuid
 
 
@@ -9,7 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.responses import BaseApiResponse
-from ...models import Movie
+from ...models.movie import Movie
 from slugify import slugify
 from ...schemas import movie as schemas
 from app.db import get_db
@@ -127,6 +128,22 @@ async def list_movies_filter_offset(
         offset = (page - 1) * per_page
         movies = (await session.exec(stmt.offset(offset).limit(per_page))).all()
     has_more = page < total_pages
+    items = [
+        schemas.MovieReadMainPage(
+            id=mov.id,
+            title=mov.title,
+            release_date=mov.release_date,
+            age_rating=mov.age_rating,
+            genre=mov.genres[0].name if mov.genres else None,
+            category=mov.category.name,
+            duration=mov.duration,
+            poster=mov.poster,
+            backdrop=mov.backdrop,
+            trailer_url=mov.trailer_url,
+            download_url=mov.download_url,
+        )
+        for mov in movies
+    ]
 
     response_data = schemas.PaginatedOffsetMovieRead(
         meta=schemas.MetaDataOffset(
@@ -136,7 +153,7 @@ async def list_movies_filter_offset(
             total_pages=total_pages,
             has_more=has_more,
         ),
-        items=movies,
+        items=items,
     )
     return BaseApiResponse.ok(
         data=response_data, message="Movies retrieved successfully"
@@ -169,7 +186,9 @@ async def list_movies_filter_cursor(
         default=None, description="Show movies released in a specific year"
     ),
 ):
-    stmt = select(Movie)
+    stmt = select(Movie).options(
+        selectinload(Movie.genres), selectinload(Movie.category)
+    )
 
     if last_id is not None:
         stmt = stmt.where(Movie.id < last_id)
@@ -187,8 +206,6 @@ async def list_movies_filter_cursor(
         stmt = stmt.where(Movie.release_date <= release_date_to)
     if release_year:
         stmt = stmt.where(Movie.release_date.ilike(f"{release_year}-%"))
-    if popularity:
-        stmt = stmt.order_by(Movie.popularity.desc())
 
     stmt = stmt.order_by(Movie.id.desc()).limit(per_page + 1)
     result = await session.exec(stmt)

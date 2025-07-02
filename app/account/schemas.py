@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field, EmailStr
+from app.movie.schemas.movie import MovieReadAccount
 
 
 class UserBase(BaseModel):
@@ -27,13 +28,15 @@ class UserMovieVote(BaseModel):
     movie_id: int 
     vote_type: str 
     created_at: datetime 
+    model_config = {"from_attributes": True}
+
 
 class UserDetails(UserBase):
-    id: int
+    id : int
     user_image: str | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime 
 
-    movies: list[UserMovieVote] = Field(default_factory=list)
+    movies: list[MovieReadAccount] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 
@@ -59,3 +62,10 @@ class CreateToken(BaseModel):
     access_token: str
     refresh_token: str | None = None
     token_type: str = "bearer"
+
+
+
+
+class Succes(BaseModel):
+    ok: str = "Succes"
+    
