@@ -25,7 +25,7 @@ class MovieRead(MovieBase):
     genres: list["GenreRead"] = Field(
         default_factory=list, title="List of genres", description="List of genre slugs"
     )
-    category: "CategoryRead" = Field(
+    category: "CategoryRead" = Field(alias="categories",
         title="Category",
         description="Category to which the movie belongs",
     )
