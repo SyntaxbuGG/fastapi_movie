@@ -244,9 +244,7 @@ async def list_movies_filter_cursor(
         items=items_movie,
     )
 
-    return BaseApiResponse.ok(
-        data=response_data, message="Succes"
-    )
+    return BaseApiResponse.ok(data=response_data, message="Succes")
 
 
 @movies_router.get("/{movie_id}", response_model=BaseApiResponse[schemas.MovieRead])
@@ -261,7 +259,10 @@ async def read_movie(movie_id: int, session: SessionDep):
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
 
-    return BaseApiResponse.ok(data=movie, message="Succesfullu get details Movie")
+    return BaseApiResponse.ok(
+        data=schemas.MovieRead.model_validate(movie).model_dump(by_alias=True),
+        message="Succesfullu get details Movie",
+    )
 
 
 @movies_router.put("/{movie_id}", response_model=schemas.MovieUpdate)

@@ -9,7 +9,7 @@ class MovieBase(BaseModel):
 
 class MovieRead(MovieBase):
     # Позволяет создавать схему из ORM-объекта (например, SQLModel), а не только из dict
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: int
     slug: str | None = None
@@ -25,7 +25,8 @@ class MovieRead(MovieBase):
     genres: list["GenreRead"] = Field(
         default_factory=list, title="List of genres", description="List of genre slugs"
     )
-    category: "CategoryRead" = Field(alias="categories",
+    category: "CategoryRead" = Field(
+        alias="categories",
         title="Category",
         description="Category to which the movie belongs",
     )
