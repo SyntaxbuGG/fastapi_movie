@@ -37,10 +37,10 @@ class MovieReadMainPage(BaseModel):
     title: str
     release_date: str | None = None
     age_rating: str | None = None
-    genre: str | None = Field(
+    genres: str | None = Field(
         default=None, title="List of genres", description="List of genre slugs"
     )
-    category: str | None = Field(
+    categories: str | None = Field(
         default=None,
         title="Category",
         description="Category to which the movie belongs",
