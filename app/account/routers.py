@@ -279,7 +279,7 @@ async def add_favorite(
     session: SessionDep,
     current_user: CurrentUserDep,
     movie_id: int,
-    rating: int = Query(ge=1, le=5, default=None),
+    rating: int | None = Query(default=None, ge=1, le=5),
     is_favorite: bool | None = Query(default=None),
 ):
     movie = await session.get(Movie, movie_id)
@@ -287,6 +287,12 @@ async def add_favorite(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found"
         )
+    if rating is None and is_favorite is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You must provide at least one of 'rating' or 'is_favorite'.",
+        )
+
     existingvote = (
         await session.exec(
             select(UserMovieVote).where(
