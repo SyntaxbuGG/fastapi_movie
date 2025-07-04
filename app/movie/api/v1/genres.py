@@ -1,7 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlmodel import not_, select, or_
-from sqlalchemy.orm import selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.responses import BaseApiResponse
