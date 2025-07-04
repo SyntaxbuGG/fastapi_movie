@@ -4,13 +4,10 @@ from typing import TYPE_CHECKING
 from .links import MovieGenreLink, UserMovieVote
 
 
-
-
 if TYPE_CHECKING:
     from .genre import Genre
     from .category import Category
-    from app.account.models import AccountUser
-    
+    from .links import UserMovieVote
 
 
 class Movie(SQLModel, table=True):
@@ -23,6 +20,7 @@ class Movie(SQLModel, table=True):
     slug: str | None = Field(max_length=512, index=True)
     download_url: str | None = Field(max_length=512)
     age_rating: str | None = Field(default=None, max_length=20)
+    rating : int | None = Field(default=None)
     duration: int | None = Field(default=None)
     trailer_url: str | None = Field(default=None, max_length=512)
     popularity: float | None = Field(default=None, ge=0.0, index=True)
@@ -33,7 +31,7 @@ class Movie(SQLModel, table=True):
     vote_average: float | None = Field(default=None, ge=0.0, le=10.0, index=True)
     vote_count: int | None = Field(default=None, ge=0, index=True)
     general_rating: int | None = Field(default=None)
-    
+
     category_id: int | None = Field(
         default=None, foreign_key="category.id", sa_column_kwargs={"index": True}
     )
@@ -43,8 +41,4 @@ class Movie(SQLModel, table=True):
         link_model=MovieGenreLink,
     )
     category: "Category" = Relationship(back_populates="movies")
-
-    accounts: list["AccountUser"] = Relationship(
-        back_populates="movies", link_model=UserMovieVote
-    )
-
+    votes: list["UserMovieVote"] = Relationship(back_populates="movie")

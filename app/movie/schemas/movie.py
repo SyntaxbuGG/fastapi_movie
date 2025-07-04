@@ -163,6 +163,7 @@ class MovieReadAccount(BaseModel):
         title="Category",
         description="category to which the movie belongs",
     )
+    
     general_rating: int | None = None
     poster: str | None = None
 

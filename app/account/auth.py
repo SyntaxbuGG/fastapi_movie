@@ -87,9 +87,9 @@ async def get_current_user(session: SessionDep, token: str = Depends(oauth2_sche
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Access token has expired",
         )
-    except JWTError as jwt:
+    except JWTError as jwt_exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Could not validate {jwt}",
+            detail=f"Could not validate {jwt_exc}",
             headers={"WWW-Authenticate": "Bearer"},
         )

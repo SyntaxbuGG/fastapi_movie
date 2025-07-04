@@ -7,17 +7,27 @@ from pathlib import Path
 
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    UploadFile,
+    File,
+    Request,
+    status,
+)
 from typing import Annotated
 from fastapi.security import OAuth2PasswordRequestForm
-from datetime import timedelta
-from jose import jwt, JWTError , ExpiredSignatureError
+from datetime import datetime, timedelta
+from jose import jwt, JWTError, ExpiredSignatureError
 from sqlalchemy.orm import selectinload
 
 from app.account import schemas
 from app.account.models import AccountUser
 from app.db import get_db
 from app.core.responses import BaseApiResponse
+from app.movie.models.movie import Movie
 from .auth import (
     ALGORITHM,
     SECRET_KEY,
@@ -127,8 +137,10 @@ async def refresh_access_token(session: SessionDep, data: schemas.TokenRefreshRe
                 select(AccountUser).where(AccountUser.username == username)
             )
         ).first()
-    except ExpiredSignatureError :
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Refresh token has expired")
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Refresh token has expired"
+        )
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -175,7 +187,7 @@ async def delete_user(current_user: CurrentUserDep, session: SessionDep):
 async def get_user(current_user: CurrentUserDep, session: SessionDep):
     stmt = (
         select(AccountUser)
-        .options(selectinload(AccountUser.movies),selectinload)
+        .options(selectinload(AccountUser.votes))
         .where(AccountUser.id == current_user.id)
     )
     userget = (await session.exec(stmt)).first()
@@ -189,7 +201,6 @@ async def get_user(current_user: CurrentUserDep, session: SessionDep):
         email=userget.email,
         user_image=userget.user_image,
         created_at=userget.created_at,
-        movies = [schemas.MovieReadAccount.model_validate(vote) for vote in userget.movies],
     )
     return BaseApiResponse.ok(data=schemadetails, message="Succesfully")
 
@@ -265,26 +276,70 @@ async def list_user(session: SessionDep):
 
 @users_router.post("/favorites", response_model=BaseApiResponse[str])
 async def add_favorite(
-    session: SessionDep, current_user: CurrentUserDep, movie_id: int
+    session: SessionDep,
+    current_user: CurrentUserDep,
+    movie_id: int,
+    rating: int = Query(ge=1, le=5, default=None),
+    is_favorite: bool | None = Query(default=None),
 ):
-    getuser = await session.get(AccountUser, current_user.id)
-    if not getuser:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    movie = await session.get(Movie, movie_id)
+    if not movie:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found"
+        )
     existingvote = (
         await session.exec(
             select(UserMovieVote).where(
-                UserMovieVote.user_id == getuser.id, UserMovieVote.movie_id == movie_id
+                UserMovieVote.user_id == current_user.id,
+                UserMovieVote.movie_id == movie_id,
             )
         )
     ).first()
     if existingvote:
-        await session.delete(existingvote)
+        if rating is not None:
+            existingvote.rating = rating
+        if is_favorite is not None:
+            existingvote.is_favorite = is_favorite
+        existingvote.updated_at = datetime.now()
         await session.commit()
-        return BaseApiResponse.ok(data="Removed", message="Removed from favorites")
+        return BaseApiResponse.ok(data="Vote changed")
     else:
         new_vote = UserMovieVote(
-            user_id=getuser.id, movie_id=movie_id, vote_type="favorite"
+            user_id=current_user.id,
+            movie_id=movie_id,
+            is_favorite=is_favorite,
+            rating=rating,
         )
         session.add(new_vote)
         await session.commit()
-        return BaseApiResponse.ok(data="added", message="Added to favorites")
+        return BaseApiResponse.ok(data="vote added")
+
+
+@users_router.get(
+    "/favorites", response_model=BaseApiResponse[list[schemas.UserFavorites]]
+)
+async def get_favorites(session: SessionDep, current_user: CurrentUserDep):
+    stmt = (
+        select(UserMovieVote)
+        .where(
+            UserMovieVote.user_id == current_user.id, UserMovieVote.is_favorite == True
+        )
+        .options(selectinload(UserMovieVote.movie).selectinload(Movie.genres))
+    )
+    votes = (await session.exec(stmt)).all()
+
+    data_response = [
+        schemas.UserFavorites(
+            id=mov.movie.id,
+            title=mov.movie.title,
+            poster=mov.movie.poster,
+            backdrop=mov.movie.backdrop,
+            download_url=mov.movie.download_url,
+            genre=mov.movie.genres[0].name if mov.movie.genres else None,
+            rating=mov.movie.rating,
+        )
+        for mov in votes
+        if mov.movie is not None
+    ]
+
+    return BaseApiResponse.ok(data=data_response)

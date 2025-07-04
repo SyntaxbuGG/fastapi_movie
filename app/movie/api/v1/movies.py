@@ -265,14 +265,14 @@ async def read_movie(movie_id: int, session: SessionDep):
     )
 
 
-@movies_router.put("/{movie_id}", response_model=schemas.MovieUpdate)
+@movies_router.patch("/{movie_id}", response_model=schemas.MovieUpdate)
 async def update_movie(
     movie_id: int, updated: schemas.MovieUpdate, session: SessionDep
 ):
     movie = await session.get(Movie, movie_id)
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
-    for key, value in updated.dict(exclude_unset=True).items():
+    for key, value in updated.model_dump(exclude_unset=True).items():
         setattr(movie, key, value)
     await session.commit()
     await session.refresh(movie)

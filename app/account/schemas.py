@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
+from platform import release
 from pydantic import BaseModel, Field, EmailStr
 from app.movie.schemas.movie import MovieReadAccount
 
 
 class UserBase(BaseModel):
-    username: str | None = Field(default=None,max_length=100)
+    username: str | None = Field(default=None, max_length=100)
     email: EmailStr | None = None
 
 
@@ -22,24 +23,23 @@ class UserUpdate(UserBase):
     user_image: str | None = None
 
 
+class UserFavorites(BaseModel):
+    id: int | None = None
+    title: str | None = None
+    poster: str | None = None
+    backdrop: str | None = None
+    download_url: str | None = None
+    genre: str | None = None
+    rating: int | None = None
 
-class UserMovieVote(BaseModel):
-    user_id: int 
-    movie_id: int 
-    vote_type: str 
-    created_at: datetime 
-    model_config = {"from_attributes": True}
 
 
 class UserDetails(UserBase):
-    id : int
+    id: int
     user_image: str | None = None
-    created_at: datetime 
-
-    movies: list[MovieReadAccount] = Field(default_factory=list)
+    created_at: datetime
 
     model_config = {"from_attributes": True}
-
 
 
 class User(BaseModel):
@@ -64,8 +64,5 @@ class CreateToken(BaseModel):
     token_type: str = "bearer"
 
 
-
-
 class Succes(BaseModel):
     ok: str = "Succes"
-    

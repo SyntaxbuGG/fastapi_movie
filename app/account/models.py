@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
-from datetime import datetime, timezone
-from app.movie.models.movie import Movie
+from datetime import datetime
+
 from app.movie.models.links import UserMovieVote
 
 
@@ -13,8 +13,4 @@ class AccountUser(SQLModel, table=True):
     user_image: str | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now())
 
-    movies: list["Movie"] = Relationship(
-        back_populates="accounts", link_model=UserMovieVote
-    )
-
-    
+    votes: list["UserMovieVote"] = Relationship(back_populates="user")
