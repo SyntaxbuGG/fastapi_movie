@@ -1,8 +1,7 @@
-from datetime import datetime, timezone
-from platform import release
+from datetime import datetime
 from pydantic import BaseModel, Field, EmailStr
 from app.movie.schemas.movie import MovieReadAccount
-
+from .models import SubscriptionType
 
 class UserBase(BaseModel):
     username: str | None = Field(default=None, max_length=100)
@@ -15,7 +14,7 @@ class UserCreate(UserBase):
 
 class UserRead(UserBase):
     id: int | None = Field(default=None)
-
+    subscription: SubscriptionType
     model_config = {"from_attributes": True}
 
 
@@ -38,6 +37,7 @@ class UserDetails(UserBase):
     id: int
     user_image: str | None = None
     created_at: datetime
+    subscription: SubscriptionType | None = None
 
     model_config = {"from_attributes": True}
 

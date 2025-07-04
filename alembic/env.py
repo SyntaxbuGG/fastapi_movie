@@ -8,8 +8,8 @@ from alembic import context
 from dotenv import load_dotenv
 
 from app.db import engine
-from app.movie.models import Category, Movie, Genre, MovieGenreLink , UserMovieVote   # noqa: F401
-from app.account.models import AccountUser  # noqa: F401
+from app.movie import models as movmodels   # noqa: F401
+from app.account import models as usermodels  # noqa: F401
 
 load_dotenv()
 

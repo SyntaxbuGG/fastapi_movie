@@ -1,4 +1,3 @@
-from getpass import getuser
 import os
 import shutil
 import uuid
@@ -14,13 +13,12 @@ from fastapi import (
     Query,
     UploadFile,
     File,
-    Request,
     status,
 )
 from typing import Annotated
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
-from jose import jwt, JWTError, ExpiredSignatureError
+from jose import jwt, ExpiredSignatureError
 from sqlalchemy.orm import selectinload
 
 from app.account import schemas
@@ -105,7 +103,7 @@ async def login(
     return BaseApiResponse.ok(data=access_token_data, message="Login successful")
 
 
-@users_router.post("/token", summary="Auth2-compatible login")
+@users_router.post("/token", summary="Auth2-compatible login", include_in_schema=False)
 async def login_for_access_token(
     session: SessionDep, form_data: OAuth2PasswordRequestForm = Depends()
 ):
@@ -201,6 +199,7 @@ async def get_user(current_user: CurrentUserDep, session: SessionDep):
         email=userget.email,
         user_image=userget.user_image,
         created_at=userget.created_at,
+        subscription=userget.subscription
     )
     return BaseApiResponse.ok(data=schemadetails, message="Succesfully")
 
