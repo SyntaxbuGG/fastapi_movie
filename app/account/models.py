@@ -18,7 +18,7 @@ class AccountUser(SQLModel, table=True):
     hashed_password: str
     disabled: bool = False
     user_image: str | None = Field(default=None)
-    subscription: SubscriptionType = Field(default=SubscriptionType.free, nullable=True)
+    subscription: SubscriptionType = Field(default=SubscriptionType.free)
     created_at: datetime = Field(default_factory=lambda: datetime.now())
 
     votes: list["UserMovieVote"] = Relationship(back_populates="user")

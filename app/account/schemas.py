@@ -37,7 +37,7 @@ class UserDetails(UserBase):
     id: int
     user_image: str | None = None
     created_at: datetime
-    subscription: SubscriptionType | None = None
+    subscription: SubscriptionType 
 
     model_config = {"from_attributes": True}
 

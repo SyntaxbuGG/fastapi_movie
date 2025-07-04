@@ -139,8 +139,8 @@ async def list_movies_filter_offset(
             duration=mov.duration,
             poster=mov.poster,
             backdrop=mov.backdrop,
-            trailer_url=mov.trailer_url,
-            download_url=mov.download_url,
+            is_premium=mov.is_premium,
+            is_vip_only=mov.is_vip_only,
         )
         for mov in movies
     ]
@@ -208,6 +208,7 @@ async def list_movies_filter_cursor(
         stmt = stmt.where(Movie.release_date.ilike(f"{release_year}-%"))
 
     stmt = stmt.order_by(Movie.id.desc()).limit(per_page + 1)
+
     result = await session.exec(stmt)
     movies = result.all()
 
@@ -232,8 +233,8 @@ async def list_movies_filter_cursor(
             duration=mov.duration,
             poster=mov.poster,
             backdrop=mov.backdrop,
-            trailer_url=mov.trailer_url,
-            download_url=mov.download_url,
+            is_premium=mov.is_premium,
+            is_vip_only=mov.is_vip_only,
         )
         for mov in movies
     ]

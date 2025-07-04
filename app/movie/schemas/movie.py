@@ -1,5 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict, field_serializer
-
+from pydantic import BaseModel, Field, ConfigDict
 
 class MovieBase(BaseModel):
     title: str = Field(max_length=512)
@@ -30,6 +29,10 @@ class MovieRead(MovieBase):
         title="Category",
         description="Category to which the movie belongs",
     )
+    trailer_url: str | None = None
+    download_url: str | None = None
+    is_premium: bool
+    is_vip_only: bool
 
 
 class MovieReadMainPage(BaseModel):
@@ -50,8 +53,8 @@ class MovieReadMainPage(BaseModel):
     duration: int | None = None
     poster: str | None = None
     backdrop: str | None = None
-    trailer_url: str | None = None
-    download_url: str | None = None
+    is_premium: bool
+    is_vip_only: bool
 
 
 class MetaDataOffset(BaseModel):
@@ -163,7 +166,7 @@ class MovieReadAccount(BaseModel):
         title="Category",
         description="category to which the movie belongs",
     )
-    
+
     general_rating: int | None = None
     poster: str | None = None
 
