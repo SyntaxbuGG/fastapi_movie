@@ -199,7 +199,7 @@ async def get_user(current_user: CurrentUserDep, session: SessionDep):
         email=userget.email,
         user_image=userget.user_image,
         created_at=userget.created_at,
-        subscription=userget.subscription
+        subscription=userget.subscription,
     )
     return BaseApiResponse.ok(data=schemadetails, message="Succesfully")
 

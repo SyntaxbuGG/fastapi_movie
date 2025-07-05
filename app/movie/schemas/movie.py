@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 
+
 class MovieBase(BaseModel):
     title: str = Field(max_length=512)
     original_title: str | None = Field(default=None, max_length=512)

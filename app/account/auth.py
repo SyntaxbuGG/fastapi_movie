@@ -18,8 +18,8 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES')
-REFRESH_TOKEN_EXPIRE_DAYS = os.getenv("REFRESH_TOKEN_EXPIRE_DAYS")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/token")
@@ -52,14 +52,13 @@ async def authenticate_user(session: SessionDep, username: str, password: str):
 
 
 async def create_access_token(sub: str, expires_delta: timedelta | None = None):
-    to_encode = {"sub": sub}
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=15))
-    to_encode.update({"exp": expire})
+    expire = datetime.now(timezone.utc) + expires_delta
+    to_encode = {"sub": sub, "exp": expire}
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 async def create_refresh_token(sub: str, expires_delta: timedelta | None = None):
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(days=7))
+    expire = datetime.now(timezone.utc) + expires_delta
     to_encode = {"sub": sub, "exp": expire}
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
