@@ -1,7 +1,7 @@
 from .movie import Movie
 from .category import Category
 from .genre import Genre
-from .links import MovieGenreLink, UserMovieVote
+
 
 
 

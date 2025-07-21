@@ -1,9 +1,9 @@
 from fastapi import APIRouter
-from app.account.routers import users_router
+from app.account.api.v1.users_router import users_router
 from app.movie.api.v1.movies import movies_router
 from app.movie.api.v1.categories import category_router
 from app.movie.api.v1.genres import genre_router
-from app.movie.services.movie_service import router # noqa: F401
+from app.movie.services.movie_service import router  # noqa: F401
 
 api_router = APIRouter()
 api_router.include_router(users_router, prefix="/v1/users", tags=["users"])

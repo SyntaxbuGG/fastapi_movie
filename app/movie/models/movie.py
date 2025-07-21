@@ -1,7 +1,8 @@
 from sqlmodel import Relationship, SQLModel, Field
 from typing import TYPE_CHECKING
 
-from .links import MovieGenreLink, UserMovieVote
+from .links import MovieGenreLink
+from app.shared.links.movie_account_links import UserMovieVote
 
 
 if TYPE_CHECKING:

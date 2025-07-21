@@ -4,7 +4,12 @@ from app import routers
 
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from app.core.exceptions import http_exception_handler, validation_exception_handler
+from app.core.exceptions import (
+    AppBaseException,
+    http_exception_handler,
+    validation_exception_handler,
+    app_exception_handler,
+)
 from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 
@@ -42,4 +47,5 @@ def health_check():
 app.include_router(router=routers.api_router, prefix="/api", tags=["API movies"])
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(AppBaseException, app_exception_handler)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

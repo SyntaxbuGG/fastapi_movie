@@ -52,6 +52,9 @@ jobs:
       - name: Run Alembic migrations
         run: alembic upgrade head
 
+      - name: Run tests
+        run: pytest -v --tb=short
+
       - name: 📜 Make start.sh executable
         run: chmod +x start.sh
 
@@ -64,6 +67,11 @@ jobs:
           sleep 3
           curl --fail http://localhost:8000/healthz || curl --fail http://localhost:8000/docs || exit 1
 
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to Render
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
