@@ -24,6 +24,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -62,6 +63,7 @@ jobs:
 
         env:
           PORT: 8000
+          
         run: |
           ./start.sh &
           sleep 3
